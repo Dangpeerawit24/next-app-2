@@ -3,16 +3,16 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql" // ใช้ MySQL (หรือ "postgresql" ถ้าใช้ PostgreSQL)
+  provider = "mysql"
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id        String  @id @default(uuid())
+model user {
+  id        String    @id @db.VarChar(255)
   name      String?
-  email     String  @unique
+  email     String    @unique(map: "User_email_key")
   password  String
-  role      String  @default("user") // "admin" หรือ "user"
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt()
+  role      String    @default("user")
+  createdAt DateTime  @default(now())
+  updatedAt DateTime? @default(now()) @db.Timestamp(0)
 }
