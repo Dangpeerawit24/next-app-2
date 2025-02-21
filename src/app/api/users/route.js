@@ -1,6 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 import { NextResponse } from "next/server";
 import bcrypt from "bcrypt";
+import { v4 as uuidv4 } from "uuid";
 
 const prisma = new PrismaClient();
 
@@ -12,33 +13,57 @@ export async function GET() {
 
 // ✅ เพิ่มสมาชิกใหม่
 export async function POST(req) {
-  const { email, name, password, role } = await req.json();
+  try {
+    const { email, name, password, role } = await req.json();
 
-  // เข้ารหัสรหัสผ่านก่อนบันทึก
-  const hashedPassword = await bcrypt.hash(password, 12);
+    // เช็คว่ามี email นี้อยู่ในระบบแล้วหรือไม่
+    const existingUser = await prisma.user.findUnique({ where: { email } });
+    if (existingUser) {
+      return NextResponse.json(
+        { error: "อีเมลนี้ถูกใช้ไปแล้ว" },
+        { status: 400 }
+      );
+    }
 
-  const user = await prisma.user.create({
-    data: { email, name, password: hashedPassword, role },
-  });
+    // เข้ารหัสรหัสผ่านก่อนบันทึก
+    const hashedPassword = await bcrypt.hash(password, 12);
 
-  return NextResponse.json(user);
+    // สร้าง user ใหม่
+    const user = await prisma.user.create({
+      data: {
+        id: uuidv4(),
+        email,
+        name,
+        password: hashedPassword,
+        role,
+      },
+    });
+
+    return NextResponse.json(user);
+  } catch (error) {
+    console.error("เกิดข้อผิดพลาด:", error);
+    return NextResponse.json(
+      { error: "ไม่สามารถเพิ่มสมาชิกได้" },
+      { status: 500 }
+    );
+  }
 }
 
 // ✅ แก้ไขข้อมูลสมาชิก
 export async function PUT(req) {
-    const { id, name, email, role } = await req.json();
-  
-    try {
-      const user = await prisma.user.update({
-        where: { id },
-        data: { name, email, role },
-      });
-  
-      return NextResponse.json(user);
-    } catch (error) {
-      return NextResponse.json({ error: "ไม่สามารถอัปเดตข้อมูลได้" }, { status: 500 });
-    }
+  const { id, name, email, role } = await req.json();
+
+  try {
+    const user = await prisma.user.update({
+      where: { id },
+      data: { name, email, role },
+    });
+
+    return NextResponse.json(user);
+  } catch (error) {
+    return NextResponse.json({ error: "ไม่สามารถอัปเดตข้อมูลได้" }, { status: 500 });
   }
+}
 
 // ✅ ลบสมาชิก
 export async function DELETE(req) {
