@@ -1,7 +1,5 @@
 import { PrismaClient } from "@prisma/client";
 import { NextResponse } from "next/server";
-import bcrypt from "bcrypt";
-import { v4 as uuidv4 } from "uuid";
 import { EventEmitter } from "events";
 
 const prisma = new PrismaClient();
@@ -13,10 +11,11 @@ export async function GET(req) {
   const stream = new ReadableStream({
     async start(controller) {
       const sendData = async () => {
-        const users = await prisma.user.findMany({
+        const topics = await prisma.topic.findMany({
           orderBy: { createdAt: "asc" } 
         });
-        controller.enqueue(encoder.encode(`data: ${JSON.stringify(users)}\n\n`));
+        
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify(topics)}\n\n`));
       };
 
       await sendData();
@@ -36,6 +35,7 @@ export async function GET(req) {
         console.log("❌ SSE Connection Closed");
       };
       
+      
     },
   });
 
@@ -51,34 +51,19 @@ export async function GET(req) {
 // ✅ เพิ่มสมาชิกใหม่
 export async function POST(req) {
   try {
-    const { email, name, password, role } = await req.json();
-
-    // เช็คว่ามี email นี้อยู่ในระบบแล้วหรือไม่
-    const existingUser = await prisma.user.findUnique({ where: { email } });
-    if (existingUser) {
-      return NextResponse.json(
-        { error: "อีเมลนี้ถูกใช้ไปแล้ว" },
-        { status: 400 }
-      );
-    }
-
-    // เข้ารหัสรหัสผ่านก่อนบันทึก
-    const hashedPassword = await bcrypt.hash(password, 12);
+    const { name, status } = await req.json();
 
     // สร้าง user ใหม่
-    const user = await prisma.user.create({
+    const topic = await prisma.topic.create({
       data: {
-        id: uuidv4(),
-        email,
         name,
-        password: hashedPassword,
-        role,
+        status,
       },
     });
 
     userEvent.emit("update");
 
-    return NextResponse.json(user);
+    return NextResponse.json(topic);
   } catch (error) {
     console.error("เกิดข้อผิดพลาด:", error);
     return NextResponse.json(
@@ -90,17 +75,17 @@ export async function POST(req) {
 
 // ✅ แก้ไขข้อมูลสมาชิก
 export async function PUT(req) {
-  const { id, name, email, role } = await req.json();
+  const { id, name, status } = await req.json();
 
   try {
-    const user = await prisma.user.update({
+    const topic = await prisma.topic.update({
       where: { id },
-      data: { name, email, role },
+      data: { name, status },
     });
 
     userEvent.emit("update");
 
-    return NextResponse.json(user);
+    return NextResponse.json(topic);
   } catch (error) {
     return NextResponse.json({ error: "ไม่สามารถอัปเดตข้อมูลได้" }, { status: 500 });
   }
@@ -108,11 +93,27 @@ export async function PUT(req) {
 
 // ✅ ลบสมาชิก
 export async function DELETE(req) {
-  const { id } = await req.json();
+  try {
+    const { id } = await req.json();
 
-  await prisma.user.delete({ where: { id } });
+    const topic = await prisma.topic.findUnique({ where: { id } });
 
-  userEvent.emit("update");
+    if (!topic) {
+      return NextResponse.json({ message: "Topic not found" }, { status: 404 });
+    }
 
-  return NextResponse.json({ message: "User deleted successfully" });
+    if (topic.status == "อยู่ในช่วงงาน") {
+      await prisma.topic.delete({ where: { id } });
+    } else {
+      return NextResponse.json({ message: "Cannot delete this topic" }, { status: 400 });
+    }
+    
+    userEvent.emit("update");
+
+    return NextResponse.json({ message: "Topic deleted successfully" });
+  } catch (error) {
+    return NextResponse.json({ message: "Error deleting topic", error: error.message }, { status: 500 });
+  }
 }
+
+

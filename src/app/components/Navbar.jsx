@@ -2,7 +2,20 @@
 import { useState } from "react";
 import { signOut, useSession } from "next-auth/react";
 import Link from "next/link";
-import { Menu, Bell, X, ChevronDown } from "lucide-react";
+import LinkLineButton from "../components/LinkLineButton";
+
+import {
+  Menu,
+  Bell,
+  X,
+  ChevronDown,
+  Brush,
+  List,
+  Tag,
+  QrCode,
+  Users,
+  User,
+} from "lucide-react";
 import Swal from "sweetalert2";
 import { useRouter } from "next/navigation";
 import { usePathname } from "next/navigation";
@@ -48,13 +61,14 @@ export default function Navbar() {
     else router.push("/user/dashboard");
   };
 
-  const isActive = (href) =>
-    pathname === href
+  const isActive = (href) => {
+    return pathname.startsWith(href)
       ? "bg-sky-600 text-white"
       : "text-white hover:bg-sky-800 hover:scale-105";
-
+  };
+  
   return (
-    <nav className="w-full fixed top-0 mb-4 bg-sky-900 dark:bg-gray-800 px-4 sm:px-4 lg:px-8 shadow-md">
+    <nav className="w-full fixed top-0 mb-4 bg-sky-900 dark:bg-gray-900 px-4 sm:px-4 lg:px-8 shadow-md">
       <div className="flex justify-between h-16 items-center">
         {/* Logo */}
         <button
@@ -69,19 +83,44 @@ export default function Navbar() {
         <div className="hidden xl:flex items-center gap-4">
           {session?.user?.role === "admin" && (
             <>
-              <Link href="/admin/dashboard" className={`text-lg px-4 py-2 rounded-lg transition ${isActive("/admin/dashboard")}`}>
+              <Link
+                href="/admin/dashboard"
+                className={`text-lg px-4 py-2 rounded-lg transition ${isActive(
+                  "/admin/dashboard"
+                )}`}
+              >
                 แดชบอร์ด
               </Link>
-              <Link href="#" className={`text-lg px-4 py-2 rounded-lg transition ${isActive("/admin/manage-campaign")}`}>
+              <Link
+                href="/admin/manage-campaign"
+                className={`text-lg px-4 py-2 rounded-lg transition ${isActive(
+                  "/admin/manage-campaign"
+                )}`}
+              >
                 จัดการกองบุญ
               </Link>
-              <Link href="#" className={`text-lg px-4 py-2 rounded-lg transition ${isActive("/admin/manage-topic")}`}>
+              <Link
+                href="/admin/manage-topic"
+                className={`text-lg px-4 py-2 rounded-lg transition ${isActive(
+                  "/admin/manage-topic"
+                )}`}
+              >
                 จัดการหัวข้อกองบุญ
               </Link>
-              <Link href="#" className={`text-lg px-4 py-2 rounded-lg transition ${isActive("/admin/history")}`}>
+              <Link
+                href="/admin/line-history"
+                className={`text-lg px-4 py-2 rounded-lg transition ${isActive(
+                  "/admin/line-history"
+                )}`}
+              >
                 ลูกบุญย้อนหลัง
               </Link>
-              <Link href="/admin/users" className={`text-lg px-4 py-2 rounded-lg transition ${isActive("/admin/users")}`}>
+              <Link
+                href="/admin/users"
+                className={`text-lg px-4 py-2 rounded-lg transition ${isActive(
+                  "/admin/users"
+                )}`}
+              >
                 จัดการข้อมูลสมาชิก
               </Link>
             </>
@@ -94,7 +133,7 @@ export default function Navbar() {
           <div className="relative">
             <button
               onClick={toggleNotifications}
-              className="relative flex items-center gap-2 p-2 rounded-full bg-green-500 text-white hover:bg-green-600"
+              className="relative flex items-center gap-2 p-2 rounded-full bg-blue-600 text-white hover:bg-blue-900"
             >
               <Bell size={20} />
               <span className="absolute -top-1 -right-1 flex items-center justify-center w-4 h-4 text-xs font-bold text-white bg-red-600 rounded-full">
@@ -155,7 +194,7 @@ export default function Navbar() {
                     สิทธิ์: {session?.user?.role}
                   </p>
                 </div>
-
+                {!session?.user?.lineuid && <LinkLineButton />}
                 <button
                   onClick={handleLogout}
                   className="block w-full px-4 py-2 text-left text-red-600 hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -168,46 +207,93 @@ export default function Navbar() {
         </div>
 
         {/* Mobile Slide-in Menu */}
-      {menuOpen && (
-        <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-end z-50">
-          <div className="w-64 bg-white dark:bg-gray-800 h-full p-5 shadow-lg">
-            <button
-              onClick={toggleMenu}
-              className="absolute top-4 right-4 text-gray-500 dark:text-gray-300"
-            >
-              <X size={24} />
-            </button>
-            <ul className="mt-8 space-y-4">
-              <li>
-                <Link
-                  href="/dashboard"
-                  className="block p-2 hover:bg-gray-200 dark:hover:bg-gray-700"
-                >
-                  Dashboard
-                </Link>
-              </li>
-              {session?.user?.role === "admin" && (
-                <li>
-                  <Link
-                    href="/admin"
-                    className="block p-2 hover:bg-gray-200 dark:hover:bg-gray-700"
-                  >
-                    Admin Panel
-                  </Link>
-                </li>
-              )}
-              <li>
+        {menuOpen && (
+          <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-end z-50">
+            <div className="w-80 bg-sky-900 text-white h-full p-6 shadow-lg relative">
+              {/* ปุ่มปิดเมนู */}
+              <button
+                onClick={toggleMenu}
+                className="absolute top-4 right-4 text-white hover:text-gray-300"
+              >
+                <X size={28} />
+              </button>
+
+              {/* หัวข้อเมนู */}
+              <h2 className="text-xl font-bold mb-6">เมนูจัดการระบบ</h2>
+
+              {/* รายการเมนู */}
+              <ul className="space-y-4">
+                {session?.user?.role === "admin" && (
+                  <>
+                    <Link
+                      href="/admin/dashboard"
+                      className="flex items-center gap-2 p-2 rounded hover:bg-sky-800"
+                    >
+                      <li className="flex items-center gap-2">
+                        <Brush className="w-5 h-5" />
+                        แดชบอร์ด
+                      </li>
+                    </Link>
+                    <Link
+                      href="/admin/manage-campaign"
+                      className="flex items-center gap-2 p-2 rounded hover:bg-sky-800"
+                    >
+                      <li className="flex items-center gap-2">
+                        <List className="w-5 h-5" />
+                        จัดการกองบุญ
+                      </li>
+                    </Link>
+
+                    <Link
+                      href="/admin/manage-topic"
+                      className="flex items-center gap-2 p-2 rounded hover:bg-sky-800"
+                    >
+                      <li className="flex items-center gap-2">
+                        <Tag className="w-5 h-5" />
+                        จัดการหัวข้อกองบุญ
+                      </li>
+                    </Link>
+
+                    <Link
+                      href="/admin/line-history"
+                      className="flex items-center gap-2 p-2 rounded hover:bg-sky-800"
+                    >
+                      <li className="flex items-center gap-2">
+                        <Users className="w-5 h-5" />
+                        ลูกบุญย้อนหลัง
+                      </li>
+                    </Link>
+
+                    <Link
+                      href="/admin/users"
+                      className="flex items-center gap-2 p-2 rounded hover:bg-sky-800"
+                    >
+                      <li className="flex items-center gap-2">
+                        <User className="w-5 h-5" />
+                        จัดการพนักงาน
+                      </li>
+                    </Link>
+                  </>
+                )}
+              </ul>
+
+              {/* ข้อมูลผู้ใช้ & ปุ่ม Logout */}
+              <div className="absolute bottom-6 left-6 right-6 border-t pt-4">
+                <p className="text-lg font-bold">{session?.user?.name}</p>
+                <p className="text-md">
+                  สิทธิ์การใช้งาน : {session?.user?.role}
+                </p>
+                {!session?.user?.lineuid && <LinkLineButton />}
                 <button
                   onClick={handleLogout}
-                  className="w-full text-left p-2 bg-red-500 text-white rounded hover:bg-red-600"
+                  className="mt-3 w-full py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition"
                 >
                   Logout
                 </button>
-              </li>
-            </ul>
+              </div>
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
         {/* Mobile Menu Button */}
         <div className="xl:hidden flex items-center">

@@ -11,7 +11,7 @@ import useSSE from "../../hooks/useSSE";
 export default function UserManagement() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const [users, setUsers] = useState([]);
+  const [Topics, setTopics] = useState([]);
   const [loading, setLoading] = useState(true);
 
   // ✅ ตรวจสอบสิทธิ์ (อนุญาตเฉพาะ Admin)
@@ -28,124 +28,30 @@ export default function UserManagement() {
   }, [session, status, router]);
 
   // ✅ ดึงข้อมูลสมาชิก
-  useSSE("/api/users", (data) => {
-    setUsers(data);
-    setLoading(false);
-    // console.log("✅ ได้รับข้อมูล SSE:", data);
-  });
+  useSSE("/api/topics?type=stream", (data) => {
+    setTopics(data);
+      setLoading(false);
+      // console.log("✅ ได้รับข้อมูล SSE:", data);
+    });
 
   // ✅ เพิ่มสมาชิกใหม่
-  const handleAddUser = async () => {
+  const handleAddTopics = async () => {
     const { value: formValues } = await Swal.fire({
-      title: "เพิ่มสมาชิกใหม่",
+      title: "เพิ่มหัวข้อใหม่",
       html: `
         <div class="w-full max-w-lg mx-auto p-4">
-          <!-- ชื่อ -->
+          <!-- ชื่อหัวข้อ -->
           <div class="mb-4">
-            <label class="block text-lg font-semibold mb-1">ชื่อ:</label>
-            <input id="swal-name" class="w-full p-3 border border-gray-300 rounded-lg" placeholder="กรอกชื่อ" required />
+            <label class="block text-lg font-semibold mb-1">ชื่อหัวข้อ:</label>
+            <input id="swal-name" class="w-full p-3 border border-gray-300 rounded-lg" placeholder="กรอกชื่อหัวข้อ" required />
           </div>
     
-          <!-- อีเมล -->
+          <!-- สถานะ -->
           <div class="mb-4">
-            <label class="block text-lg font-semibold mb-1">อีเมล:</label>
-            <input id="swal-email" type="email" class="w-full p-3 border border-gray-300 rounded-lg" placeholder="กรอกอีเมล" required />
-          </div>
-    
-          <!-- รหัสผ่าน -->
-          <div class="mb-4">
-            <label class="block text-lg font-semibold mb-1">รหัสผ่าน:</label>
-            <input id="swal-password" type="password" class="w-full p-3 border border-gray-300 rounded-lg" placeholder="กรอกรหัสผ่าน" required />
-          </div>
-        </div>
-      `,
-      showCancelButton: true,
-      confirmButtonText: "บันทึก",
-      cancelButtonText: "ยกเลิก",
-      focusConfirm: false,
-      preConfirm: () => {
-        const name = document.getElementById("swal-name").value.trim();
-        const email = document.getElementById("swal-email").value.trim();
-        const password = document.getElementById("swal-password").value.trim();
-    
-        if (!name || !email || !password) {
-          Swal.showValidationMessage("กรุณากรอกข้อมูลให้ครบทุกช่อง!");
-          return false;
-        }
-    
-        return { name, email, password, role: "user" };
-      }
-    });
-    
-
-    if (!formValues) return;
-
-    try {
-      const res = await fetch("/api/users", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formValues),
-      });
-
-      if (!res.ok) throw new Error("เพิ่มสมาชิกไม่สำเร็จ");
-      Swal.fire("สำเร็จ!", "เพิ่มสมาชิกใหม่แล้ว", "success");
-    } catch (error) {
-      Swal.fire("เกิดข้อผิดพลาด!", error.message, "error");
-    }
-  };
-
-  // ✅ ลบสมาชิก
-  const handleDeleteUser = async (id) => {
-    const result = await Swal.fire({
-      title: "คุณแน่ใจหรือไม่?",
-      text: "ต้องการลบสมาชิกนี้?",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonText: "ลบ",
-      cancelButtonText: "ยกเลิก",
-    });
-
-    if (result.isConfirmed) {
-      try {
-        const res = await fetch("/api/users", {
-          method: "DELETE",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ id }),
-        });
-
-        if (!res.ok) throw new Error("ลบสมาชิกไม่สำเร็จ");
-        Swal.fire("ลบสำเร็จ!", "สมาชิกถูกลบแล้ว", "success");
-      } catch (error) {
-        Swal.fire("เกิดข้อผิดพลาด!", error.message, "error");
-      }
-    }
-  };
-
-  // ✅ แก้ไขสมาชิก
-  const handleEditUser = async (user) => {
-    const { value: formValues } = await Swal.fire({
-      title: "แก้ไขข้อมูลสมาชิก",
-      html: `
-        <div class="w-full max-w-lg mx-auto p-4">
-          <!-- ชื่อ -->
-          <div class="mb-4">
-            <label class="block text-lg font-semibold mb-1">ชื่อ:</label>
-            <input id="swal-name" class="w-full p-3 border border-gray-300 rounded-lg" value="${user.name}" required />
-          </div>
-    
-          <!-- อีเมล -->
-          <div class="mb-4">
-            <label class="block text-lg font-semibold mb-1">อีเมล:</label>
-            <input id="swal-email" type="email" class="w-full p-3 border border-gray-300 rounded-lg" value="${user.email}" required />
-          </div>
-    
-          <!-- สิทธิ์ -->
-          <div class="mb-4">
-            <label class="block text-lg font-semibold mb-1">สิทธิ์:</label>
+            <label class="block text-lg font-semibold mb-1">สถานะ:</label>
             <select id="swal-role" class="w-full p-3 border border-gray-300 rounded-lg">
-              <option value="admin" ${user.role === "admin" ? "selected" : ""}>Admin</option>
-              <option value="moderator" ${user.role === "moderator" ? "selected" : ""}>Moderator</option>
-              <option value="user" ${user.role === "user" ? "selected" : ""}>User</option>
+              <option value="อยู่ในช่วงงาน">อยู่ในช่วงงาน</option>
+              <option value="จบงานแล้ว">จบงานแล้ว</option>
             </select>
           </div>
         </div>
@@ -156,15 +62,14 @@ export default function UserManagement() {
       focusConfirm: false,
       preConfirm: () => {
         const name = document.getElementById("swal-name").value.trim();
-        const email = document.getElementById("swal-email").value.trim();
-        const role = document.getElementById("swal-role").value.trim();
+        const status = document.getElementById("swal-role").value.trim();
     
-        if (!name || !email || !role) {
+        if (!name || !status) {
           Swal.showValidationMessage("กรุณากรอกข้อมูลให้ครบทุกช่อง!");
           return false;
         }
     
-        return { id: user.id, name, email, role };
+        return { name, status };
       }
     });
     
@@ -172,7 +77,102 @@ export default function UserManagement() {
     if (!formValues) return;
 
     try {
-      const res = await fetch("/api/users", {
+      const res = await fetch("/api/topics", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formValues),
+      });
+
+      if (!res.ok) throw new Error("เพิ่มข้อมูลไม่สำเร็จ");
+      Swal.fire("สำเร็จ!", "เพิ่มข้อมูลใหม่แล้ว", "success");
+    } catch (error) {
+      Swal.fire("เกิดข้อผิดพลาด!", error.message, "error");
+    }
+  };
+
+  // ✅ ลบสมาชิก
+  const handleDeleteUser = async (id) => {
+    const numericId = Number(id); // ✅ แปลง id เป็นตัวเลข
+  
+    if (isNaN(numericId) || numericId <= 0) {
+      Swal.fire("เกิดข้อผิดพลาด!", "ID ไม่ถูกต้อง", "error");
+      return;
+    }
+  
+    const result = await Swal.fire({
+      title: "คุณแน่ใจหรือไม่?",
+      text: "ต้องการลบข้อมูลนี้?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "ลบ",
+      cancelButtonText: "ยกเลิก",
+    });
+  
+    if (result.isConfirmed) {
+      try {
+        const res = await fetch("/api/topics", {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: numericId }), // ✅ ส่งค่า id เป็นตัวเลข
+        });
+  
+        const data = await res.json(); // ✅ อ่าน response กลับมา
+  
+        if (!res.ok) throw new Error(data.message || "ลบข้อมูลไม่สำเร็จ");
+        
+        Swal.fire("ลบสำเร็จ!", "ข้อมูลถูกลบแล้ว", "success");
+      } catch (error) {
+        Swal.fire("เกิดข้อผิดพลาด!", error.message, "error");
+      }
+    }
+  };
+  
+
+  // ✅ แก้ไขสมาชิก
+  const handleEditUser = async (topic) => {
+    const { value: formValues } = await Swal.fire({
+      title: "แก้ไขข้อมูลหัวข้อ",
+      html: `
+        <div class="w-full max-w-lg mx-auto p-4">
+          <!-- ชื่อหัวข้อ -->
+          <div class="mb-4">
+            <label class="block text-lg font-semibold mb-1">ชื่อหัวข้อ:</label>
+            <input id="swal-name" class="w-full p-3 border border-gray-300 rounded-lg" value="${topic.name}" required />
+          </div>
+    
+          <!-- สถานะ -->
+          <div class="mb-4">
+            <label class="block text-lg font-semibold mb-1">สถานะ:</label>
+            <select id="swal-status" class="w-full p-3 border border-gray-300 rounded-lg">
+              <option value="อยู่ในช่วงงาน" ${topic.status === "อยู่ในช่วงงาน" ? "selected" : ""}>อยู่ในช่วงงาน</option>
+              <option value="จบงานแล้ว" ${topic.status === "จบงานแล้ว" ? "selected" : ""}>จบงานแล้ว</option>
+            </select>
+          </div>
+        </div>
+      `,
+      showCancelButton: true,
+      confirmButtonText: "บันทึก",
+      cancelButtonText: "ยกเลิก",
+      focusConfirm: false,
+      preConfirm: () => {
+        const id = Number(topic.id)
+        const name = document.getElementById("swal-name").value.trim();
+        const status = document.getElementById("swal-status").value.trim();
+    
+        if (!id || !status || !name) {
+          Swal.showValidationMessage("กรุณากรอกข้อมูลให้ครบทุกช่อง!");
+          return false;
+        }
+    
+        return { id, name, status };
+      }
+    });
+    
+
+    if (!formValues) return;
+
+    try {
+      const res = await fetch("/api/topics", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formValues),
@@ -204,15 +204,15 @@ export default function UserManagement() {
       <Navbar />
       <main className="p-6">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white text-center mb-6">
-          จัดการข้อมูลสมาชิก
+          จัดการข้อมูลหัวข้อกองบุญ
         </h1>
 
         <div className="flex justify-end mb-4">
           <button
-            onClick={handleAddUser}
+            onClick={handleAddTopics}
             className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600"
           >
-            + เพิ่มสมาชิก
+            + เพิ่มหัวข้อใหม่
           </button>
         </div>
 
@@ -221,28 +221,36 @@ export default function UserManagement() {
             <thead className="bg-gray-200 dark:bg-gray-700">
               <tr>
                 <th className="p-4 w-[5%] text-center">#</th>
-                <th className="p-4 w-[20%] text-left">ชื่อ</th>
-                <th className="p-4 text-left">อีเมล</th>
-                <th className="p-4 w-[15%] text-center">สิทธิ์</th>
-                <th className="p-4 w-[15%] text-center">จัดการ</th>
+                <th className="p-4 text-left">ชื่อ</th>
+                <th className="p-4 w-[15%] text-center">จำนวนกองบุญที่เปิด</th>
+                <th className="p-4 w-[15%] text-center">ยอดรวมรายได้</th>
+                <th className="p-4 w-[15%] text-center">สถานะ</th>
+                <th className="p-4 w-[20%] text-center">จัดการ</th>
               </tr>
             </thead>
             <tbody>
-              {users.map((user, index) => (
-                <tr key={user.id} className="border-t">
+              {Topics.map((topic, index) => (
+                <tr key={topic.id} className="border-t">
                   <td className="p-4 text-center">{index + 1}</td>
-                  <td className="p-4">{user.name}</td>
-                  <td className="p-4">{user.email}</td>
-                  <td className="p-4 text-center">{user.role}</td>
+                  <td className="p-4">{topic.name}</td>
+                  <td className="p-4 text-center">{topic.total_campaigns}</td>
+                  <td className="p-4 text-center">{topic.total_value_price}</td>
+                  <td className="p-4 text-center">{topic.status}</td>
                   <td className="p-4 text-center">
                     <button
-                      onClick={() => handleEditUser(user)}
+                      onClick={() => (window.location.href = `/admin/topic-detail/${topic.id}`)}
+                      className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 mr-2"
+                    >
+                      รายละเอียด
+                    </button>
+                    <button
+                      onClick={() => handleEditUser(topic)}
                       className="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 mr-2"
                     >
                       แก้ไข
                     </button>
                     <button
-                      onClick={() => handleDeleteUser(user.id)}
+                      onClick={() => handleDeleteUser(topic.id)}
                       className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
                     >
                       ลบ
