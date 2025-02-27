@@ -3,7 +3,11 @@ import { NextResponse } from "next/server";
 import { EventEmitter } from "events";
 
 const prisma = new PrismaClient();
-const userEvent = new EventEmitter();
+if (!global.userEvent) {
+  global.userEvent = new EventEmitter();
+  global.userEvent.setMaxListeners(20); // ✅ ป้องกัน MaxListenersExceededWarning
+}
+const userEvent = global.userEvent;
 
 // ✅ อ่านข้อมูลสมาชิกทั้งหมด
 export async function GET(req) {
@@ -45,22 +49,28 @@ GROUP BY c.id, c.name;
         };
 
         await sendData();
+
+        userEvent.removeAllListeners("update");
+        userEvent.on("update", () => {
+          console.log("Update event triggered");
+        });
+
         userEvent.on("update", sendData);
 
         return () => {
           isConnectionOpen = false;
           clearInterval(heartbeat);
-        
+
           // ✅ ป้องกันการเรียก enqueue() หลังจากปิดไปแล้ว
           try {
             controller.close();
           } catch (error) {
             console.warn("⚠️ Controller ปิดอยู่แล้ว", error);
           }
-        
+
           console.log("❌ SSE Connection Closed");
         };
-        
+
       },
     });
 

@@ -8,7 +8,7 @@ import Navbar from "../../components/Navbar";
 import ScrollToTop from "../../components/ScrollToTop";
 import useSSE from "../../hooks/useSSE";
 
-export default function AdminDashboard() {
+export default function LineHistory() {
   const { data: session, status } = useSession();
   const [loading, setLoading] = useState(true);
   const [Data, setData] = useState(true);
@@ -28,7 +28,7 @@ export default function AdminDashboard() {
       }
     }, [session, status, router]);
 
-    useSSE("/api/campaigns/waitingopen", (data) => {
+    useSSE("", (data) => {
         setData(data);
       });
 
@@ -47,12 +47,12 @@ export default function AdminDashboard() {
     }
 
   return (
-    <div className="min-h-screen pt-16 bg-gray-100 dark:bg-gray-900">
+    <div className="min-h-screen pt-16 bg-gray-100 ">
       <Navbar />
       {/* Content */}
       <main className="p-6 ">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white text-center mb-6">
+          <h1 className="text-2xl font-bold text-gray-900 text-center mb-6">
             จัดการข้อมูลหัวข้อกองบุญ
           </h1>
         </div>        

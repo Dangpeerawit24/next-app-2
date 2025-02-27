@@ -27,7 +27,7 @@ model Campaign_transactions {
   value      String
   details      String?
   details2      String?
-  detailsbirthday      String?
+  detailsname      String?
   detailsbirthdate      String?
   detailsbirthmonth      String?
   detailsbirthyear     String?

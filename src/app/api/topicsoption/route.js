@@ -3,7 +3,11 @@ import { NextResponse } from "next/server";
 import { EventEmitter } from "events";
 
 const prisma = new PrismaClient();
-const userEvent = new EventEmitter();
+if (!global.userEvent) {
+  global.userEvent = new EventEmitter();
+  global.userEvent.setMaxListeners(20); // ✅ ป้องกัน MaxListenersExceededWarning
+}
+const userEvent = global.userEvent;
 
 // ✅ อ่านข้อมูลสมาชิกทั้งหมด
 export async function GET(req) {
@@ -12,13 +16,19 @@ export async function GET(req) {
     async start(controller) {
       const sendData = async () => {
         const topics = await prisma.topic.findMany({
-          orderBy: { createdAt: "asc" } 
+          orderBy: { createdAt: "asc" }
         });
-        
+
         controller.enqueue(encoder.encode(`data: ${JSON.stringify(topics)}\n\n`));
       };
 
       await sendData();
+
+      userEvent.removeAllListeners("update");
+      userEvent.on("update", () => {
+        console.log("Update event triggered");
+      });
+
       userEvent.on("update", sendData);
 
       return () => {
@@ -34,8 +44,6 @@ export async function GET(req) {
       
         console.log("❌ SSE Connection Closed");
       };
-      
-      
     },
   });
 
@@ -107,7 +115,7 @@ export async function DELETE(req) {
     } else {
       return NextResponse.json({ message: "Cannot delete this topic" }, { status: 400 });
     }
-    
+
     userEvent.emit("update");
 
     return NextResponse.json({ message: "Topic deleted successfully" });

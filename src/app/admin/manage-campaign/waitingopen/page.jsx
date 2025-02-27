@@ -14,7 +14,7 @@ import useSSE from "../../../hooks/useSSE";
 
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
 
-export default function UserManagement() {
+export default function CampaignWaitingOpen() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [campaigns, setCampaigns] = useState([]);

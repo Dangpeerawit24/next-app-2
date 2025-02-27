@@ -14,7 +14,7 @@ import useSSE from "../../../hooks/useSSE";
 
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
 
-export default function UserManagement() {
+export default function CampaignClosed() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [campaigns, setCampaigns] = useState([]);
@@ -128,17 +128,17 @@ export default function UserManagement() {
   };
 
   return (
-    <div className="min-h-screen pt-16 bg-gray-100 dark:bg-gray-900">
+    <div className="min-h-screen pt-16 bg-gray-100">
       <Navbar />
       <main className="p-6">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white text-center mb-6">
+        <h1 className="text-2xl font-bold text-gray-900  text-center mb-6">
           กองบุญที่ปิดให้ร่วมบุญแล้ว
         </h1>
 
         <div className="overflow-x-auto">
           <div className="overflow-auto rounded-lg shadow-lg">
-            <table className="min-w-full border-collapse bg-white dark:bg-gray-800 rounded-lg">
-              <thead className="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200">
+            <table className="min-w-full border-collapse bg-white  rounded-lg">
+              <thead className="bg-gray-200  text-gray-700 ">
                 <tr>
                   <th className="p-4 w-[5%] text-center">#</th>
                   <th className="p-4 w-[10%] text-center">รูป</th>
@@ -153,7 +153,7 @@ export default function UserManagement() {
                 {campaigns.map((campaign, index) => (
                   <tr
                     key={campaign.id}
-                    className="border-t hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+                    className="border-t hover:bg-gray-100 transition"
                   >
                     <td className="p-4 text-center">{index + 1}</td>
                     <td className="p-4 text-center items-center">

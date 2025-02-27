@@ -1,4 +1,20 @@
 -- CreateTable
+CREATE TABLE `User` (
+    `id` VARCHAR(191) NOT NULL,
+    `name` VARCHAR(191) NULL,
+    `email` VARCHAR(191) NOT NULL,
+    `lineuid` VARCHAR(191) NULL,
+    `password` VARCHAR(191) NOT NULL,
+    `role` VARCHAR(191) NOT NULL DEFAULT 'user',
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updatedAt` DATETIME(3) NOT NULL,
+
+    UNIQUE INDEX `User_email_key`(`email`),
+    UNIQUE INDEX `User_lineuid_key`(`lineuid`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
 CREATE TABLE `Campaign_transactions` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `campaignsname` VARCHAR(191) NOT NULL,
@@ -8,7 +24,7 @@ CREATE TABLE `Campaign_transactions` (
     `value` VARCHAR(191) NOT NULL,
     `details` VARCHAR(191) NULL,
     `details2` VARCHAR(191) NULL,
-    `detailsbirthday` VARCHAR(191) NULL,
+    `detailsname` VARCHAR(191) NULL,
     `detailsbirthdate` VARCHAR(191) NULL,
     `detailsbirthmonth` VARCHAR(191) NULL,
     `detailsbirthyear` VARCHAR(191) NULL,
@@ -49,6 +65,7 @@ CREATE TABLE `Campaign` (
     `price` INTEGER NULL,
     `respond` VARCHAR(191) NULL,
     `stock` INTEGER NULL,
+    `details` VARCHAR(191) NULL,
     `campaign_img` VARCHAR(191) NULL,
     `campaign_imgpush` VARCHAR(191) NULL,
     `status` VARCHAR(191) NULL,

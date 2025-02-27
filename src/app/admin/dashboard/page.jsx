@@ -29,7 +29,7 @@ export default function AdminDashboard() {
     }
   }, [session, status, router]);
 
-  useSSE("/api/campaigns/waitingopen", (data) => {
+  useSSE("", (data) => {
     setCampaigns(data);
   });
 
@@ -48,12 +48,12 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen pt-16 bg-gray-100 dark:bg-gray-900">
+    <div className="min-h-screen pt-16 bg-gray-100">
       <Navbar />
       {/* Content */}
       <main className="p-6 ">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-800 dark:text-white">
+          <h2 className="text-2xl font-bold text-gray-800 ">
             ยินดีต้อนรับ, {session?.user?.email}
           </h2>
           <p className="text-gray-600 dark:text-gray-300 mt-2">
@@ -63,22 +63,22 @@ export default function AdminDashboard() {
 
         {/* การ์ดข้อมูล */}
         <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md text-center">
-            <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
+          <div className="bg-white  p-6 rounded-lg shadow-md text-center">
+            <h3 className="text-lg font-semibold text-gray-800 ">
               จำนวนผู้ใช้
             </h3>
             <p className="text-2xl font-bold text-blue-600">1,234</p>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md text-center">
-            <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
+          <div className="bg-white  p-6 rounded-lg shadow-md text-center">
+            <h3 className="text-lg font-semibold text-gray-800 ">
               ยอดขายวันนี้
             </h3>
             <p className="text-2xl font-bold text-green-600">฿25,000</p>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md text-center">
-            <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
+          <div className="bg-white  p-6 rounded-lg shadow-md text-center">
+            <h3 className="text-lg font-semibold text-gray-800 ">
               คำสั่งซื้อที่รอดำเนินการ
             </h3>
             <p className="text-2xl font-bold text-orange-600">15</p>

@@ -68,7 +68,7 @@ export default function Navbar() {
   };
   
   return (
-    <nav className="w-full fixed top-0 mb-4 bg-sky-900 dark:bg-gray-900 px-4 sm:px-4 lg:px-8 shadow-md">
+    <nav className="w-full fixed top-0 mb-4 bg-sky-900  px-4 sm:px-4 lg:px-8 shadow-md">
       <div className="flex justify-between h-16 items-center">
         {/* Logo */}
         <button
@@ -143,28 +143,28 @@ export default function Navbar() {
 
             {/* Dropdown แจ้งเตือน */}
             {notificationOpen && (
-              <div className="absolute right-0 mt-2 w-64 bg-white border rounded-lg shadow-lg dark:bg-gray-800">
-                <div className="px-4 py-2 border-b dark:border-gray-700">
-                  <p className="text-sm font-semibold text-gray-900 dark:text-white">
+              <div className="absolute right-0 mt-2 w-64 bg-white border rounded-lg shadow-lg ">
+                <div className="px-4 py-2 border-b ">
+                  <p className="text-sm font-semibold text-gray-900 ">
                     การแจ้งเตือน
                   </p>
                 </div>
 
                 {/* รายการแจ้งเตือน (จำลองข้อมูล) */}
-                <ul className="p-2 space-y-2 text-gray-700 dark:text-gray-300">
-                  <li className="px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer">
+                <ul className="p-2 space-y-2 text-gray-700 ">
+                  <li className="px-4 py-2 hover:bg-gray-100  cursor-pointer">
                     🔔 มีรายการใหม่รออนุมัติ
                   </li>
-                  <li className="px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer">
+                  <li className="px-4 py-2 hover:bg-gray-100  cursor-pointer">
                     📝 มีความคิดเห็นใหม่ในโพสต์ของคุณ
                   </li>
-                  <li className="px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer">
+                  <li className="px-4 py-2 hover:bg-gray-100  cursor-pointer">
                     ✅ การสมัครของคุณได้รับการอนุมัติ
                   </li>
                 </ul>
 
                 {/* ถ้าไม่มีแจ้งเตือน */}
-                <div className="px-4 py-2 text-center text-gray-500 dark:text-gray-400">
+                <div className="px-4 py-2 text-center text-gray-500 ">
                   ไม่มีการแจ้งเตือนใหม่
                 </div>
               </div>
@@ -175,29 +175,29 @@ export default function Navbar() {
           <div className="relative hidden xl:block">
             <button
               onClick={toggleDropdown}
-              className="flex items-center gap-2 px-4 py-2 bg-white border rounded-lg shadow-sm hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700"
+              className="flex items-center gap-2 px-4 py-2 bg-white border rounded-lg shadow-sm hover:bg-gray-100  "
             >
-              <span className="font-semibold text-gray-900 dark:text-white">
+              <span className="font-semibold text-gray-900 ">
                 {session?.user?.name || "ผู้ใช้"}
               </span>
-              <ChevronDown className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+              <ChevronDown className="w-4 h-4 text-gray-600 " />
             </button>
 
             {/* Dropdown รายละเอียดผู้ใช้ */}
             {dropdownOpen && (
-              <div className="absolute right-0 mt-2 w-56 bg-white border rounded-lg shadow-lg dark:bg-gray-800">
-                <div className="px-4 py-2 border-b dark:border-gray-700">
-                  <p className="text-sm font-semibold text-gray-900 dark:text-white">
+              <div className="absolute right-0 mt-2 w-56 bg-white border rounded-lg shadow-lg ">
+                <div className="px-4 py-2 border-b ">
+                  <p className="text-sm font-semibold text-gray-900 ">
                     {session?.user?.name}
                   </p>
-                  <p className="text-xs text-gray-600 dark:text-gray-400">
+                  <p className="text-xs text-gray-600 ">
                     สิทธิ์: {session?.user?.role}
                   </p>
                 </div>
                 {!session?.user?.lineuid && <LinkLineButton />}
                 <button
                   onClick={handleLogout}
-                  className="block w-full px-4 py-2 text-left text-red-600 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  className="block w-full px-4 py-2 text-left text-red-600 hover:bg-gray-100 "
                 >
                   ออกจากระบบ
                 </button>

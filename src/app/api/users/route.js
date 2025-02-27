@@ -5,7 +5,11 @@ import { v4 as uuidv4 } from "uuid";
 import { EventEmitter } from "events";
 
 const prisma = new PrismaClient();
-const userEvent = new EventEmitter();
+if (!global.userEvent) {
+  global.userEvent = new EventEmitter();
+  global.userEvent.setMaxListeners(20); // ✅ ป้องกัน MaxListenersExceededWarning
+}
+const userEvent = global.userEvent;
 
 // ✅ อ่านข้อมูลสมาชิกทั้งหมด
 export async function GET(req) {
@@ -14,28 +18,34 @@ export async function GET(req) {
     async start(controller) {
       const sendData = async () => {
         const users = await prisma.user.findMany({
-          orderBy: { createdAt: "asc" } 
+          orderBy: { createdAt: "asc" }
         });
         controller.enqueue(encoder.encode(`data: ${JSON.stringify(users)}\n\n`));
       };
 
       await sendData();
+
+      userEvent.removeAllListeners("update");
+      userEvent.on("update", () => {
+        console.log("Update event triggered");
+      });
+
       userEvent.on("update", sendData);
 
       return () => {
         isConnectionOpen = false;
         clearInterval(heartbeat);
-      
+
         // ✅ ป้องกันการเรียก enqueue() หลังจากปิดไปแล้ว
         try {
           controller.close();
         } catch (error) {
           console.warn("⚠️ Controller ปิดอยู่แล้ว", error);
         }
-      
+
         console.log("❌ SSE Connection Closed");
       };
-      
+
     },
   });
 

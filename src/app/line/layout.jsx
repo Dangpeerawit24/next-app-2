@@ -1,0 +1,17 @@
+"use client";
+
+import React from "react";
+
+export default function LineLayout({ children }) {
+  return (
+    <div className="flex justify-center p-0 m-0 box-border">
+      <header></header>
+
+      <main className="">
+        {children}
+      </main>
+
+      <footer></footer>
+    </div>
+  );
+}

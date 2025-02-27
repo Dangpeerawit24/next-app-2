@@ -1,3 +1,9 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+.no-border {
+    border: none !important;  /* ลบเส้นขอบ */
+    box-shadow: none !important; /* ลบเงาที่อาจเป็นขอบดำ */
+    background: transparent !important; /* พื้นหลังโปร่งใส */
+  }

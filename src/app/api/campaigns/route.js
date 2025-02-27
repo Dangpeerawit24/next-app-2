@@ -1,15 +1,16 @@
 import { PrismaClient } from "@prisma/client";
 import { NextResponse } from "next/server";
-import bcrypt from "bcrypt";
-import { v4 as uuidv4 } from "uuid";
 import { EventEmitter } from "events";
 import fs from "fs";
+import { promises as fsPromises } from "fs"; 
 import path from "path";
-import { randomInt } from "crypto";
-
 
 const prisma = new PrismaClient();
-const userEvent = new EventEmitter();
+if (!global.userEvent) {
+  global.userEvent = new EventEmitter();
+  global.userEvent.setMaxListeners(20); // ✅ ป้องกัน MaxListenersExceededWarning
+}
+const userEvent = global.userEvent;
 
 // ✅ อ่านข้อมูลสมาชิกทั้งหมด
 export async function GET(req) {
@@ -28,6 +29,11 @@ export async function GET(req) {
       };
 
       await sendData();
+
+      userEvent.removeAllListeners("update");
+      userEvent.on("update", () => {
+        console.log("Update event triggered");
+      });
       userEvent.on("update", sendData);
 
       return () => {
@@ -86,7 +92,7 @@ export async function POST(req) {
 
     const fileBuffer = Buffer.from(await file.arrayBuffer());
     await fs.promises.writeFile(newFilePath, fileBuffer);
-    const campaign_img = `/img/campaigns/${newFileName}`;
+    const campaign_img = `img/campaigns/${newFileName}`;
 
     const campaign = await prisma.campaign.create({
       data: {
@@ -211,12 +217,47 @@ export async function PUT(req) {
 }
 
 export async function DELETE(req) {
-  const { id } = await req.json();
+  try {
+    const { id } = await req.json();
 
-  await prisma.campaign.delete({ where: { id } });
+    // ค้นหา campaign เพื่อนำชื่อไฟล์รูปมาใช้
+    const campaign = await prisma.campaign.findUnique({
+      where: { id },
+      select: { campaign_img: true },
+    });
 
-  userEvent.emit("update");
+    if (!campaign) {
+      return NextResponse.json({ error: "Campaign not found" }, { status: 404 });
+    }
 
-  return NextResponse.json({ message: "deleted successfully" });
+    const filePath = campaign.campaign_img;
+
+    if (filePath) {
+      const absolutePath = path.join(process.cwd(), "public", filePath);
+
+      // ตรวจสอบว่าไฟล์มีอยู่ก่อนลบ
+      if (fs.existsSync(absolutePath)) { 
+        try {
+          await fsPromises.unlink(absolutePath); 
+          console.log(`File deleted: ${absolutePath}`);
+        } catch (error) {
+          console.error(`Failed to delete file: ${absolutePath}`, error);
+        }
+      } else {
+        console.warn(`File not found: ${absolutePath}`);
+      }
+    }
+
+    // ลบข้อมูลแคมเปญจากฐานข้อมูล
+    await prisma.campaign.delete({ where: { id } });
+
+    // แจ้ง event update
+    userEvent.emit("update");
+
+    return NextResponse.json({ message: "Deleted successfully" });
+
+  } catch (error) {
+    console.error("Error deleting campaign:", error);
+    return NextResponse.json({ error: "Failed to delete campaign" }, { status: 500 });
+  }
 }
-

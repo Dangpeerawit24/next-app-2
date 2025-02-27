@@ -8,7 +8,7 @@ import Navbar from "../../components/Navbar";
 import ScrollToTop from "../../components/ScrollToTop";
 import useSSE from "../../hooks/useSSE";
 
-export default function UserManagement() {
+export default function ManageTopic() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [Topics, setTopics] = useState([]);
@@ -30,7 +30,7 @@ export default function UserManagement() {
   // ✅ ดึงข้อมูลสมาชิก
   useSSE("/api/topics?type=stream", (data) => {
     setTopics(data);
-      setLoading(false);
+    setLoading(false);
       // console.log("✅ ได้รับข้อมูล SSE:", data);
     });
 
@@ -200,10 +200,10 @@ export default function UserManagement() {
   }
 
   return (
-    <div className="min-h-screen pt-16 bg-gray-100 dark:bg-gray-900">
+    <div className="min-h-screen pt-16 bg-gray-100 ">
       <Navbar />
       <main className="p-6">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white text-center mb-6">
+        <h1 className="text-2xl font-bold text-gray-900  text-center mb-6">
           จัดการข้อมูลหัวข้อกองบุญ
         </h1>
 
@@ -217,8 +217,8 @@ export default function UserManagement() {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full border-collapse bg-white dark:bg-gray-800 rounded-lg shadow-md">
-            <thead className="bg-gray-200 dark:bg-gray-700">
+          <table className="w-full border-collapse bg-white rounded-lg shadow-md">
+            <thead className="bg-gray-200 ">
               <tr>
                 <th className="p-4 w-[5%] text-center">#</th>
                 <th className="p-4 text-left">ชื่อ</th>

@@ -6,7 +6,11 @@ import path from "path";
 
 
 const prisma = new PrismaClient();
-const userEvent = new EventEmitter();
+if (!global.userEvent) {
+  global.userEvent = new EventEmitter();
+  global.userEvent.setMaxListeners(20); // ✅ ป้องกัน MaxListenersExceededWarning
+}
+const userEvent = global.userEvent;
 
 // ✅ อ่านข้อมูลสมาชิกทั้งหมด
 export async function GET(req) {
@@ -22,6 +26,12 @@ export async function GET(req) {
       };
 
       await sendData();
+
+      userEvent.removeAllListeners("update");
+      userEvent.on("update", () => {
+        console.log("Update event triggered");
+      });
+      
       userEvent.on("update", sendData);
 
       return () => {
