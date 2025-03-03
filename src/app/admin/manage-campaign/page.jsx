@@ -38,6 +38,33 @@ export default function ManageCampaign() {
     setLoading(false);
   });
 
+  if (typeof window !== "undefined") {
+    window.handleDonationAllChange = function (e) {
+      const checked = e.target.checked;
+      if (checked) {
+        const swalPrice = document.getElementById("swal-price");
+        const swalStock = document.getElementById("swal-stock");
+        if (swalPrice) {
+          swalPrice.value = 1;
+          swalPrice.disabled = true;
+        }
+        if (swalStock) {
+          swalStock.value = 999999;
+          swalStock.disabled = true;
+        }
+      } else {
+        const swalPrice = document.getElementById("swal-price");
+        const swalStock = document.getElementById("swal-stock");
+        if (swalPrice) {
+          swalPrice.disabled = false;
+        }
+        if (swalStock) {
+          swalStock.disabled = false;
+        }
+      }
+    };
+  }
+
   // ✅ เพิ่มสมาชิกใหม่
   const handleAddUser = async () => {
     const { value: formValues } = await Swal.fire({
@@ -75,10 +102,11 @@ export default function ManageCampaign() {
             <p class="w-1/3 text-lg text-start font-semibold">ข้อมูลที่ส่ง:</p>
             <select id="swal-details" class="w-2/3 p-2 border border-gray-300 rounded-lg">
               <option value="ชื่อสกุล">ชื่อสกุล</option>
-              <option value="กล่องข้อความใหญ่">กล่องข้อความใหญ่</option>
               <option value="ชื่อวันเดือนปีเกิด">ชื่อวันเดือนปีเกิด</option>
+              <option value="กล่องข้อความใหญ่">กล่องข้อความใหญ่</option>
+              <option value="คำอธิษฐาน">คำอธิษฐาน</option>
               <option value="ตามศรัทธา">ตามศรัทธา</option>
-              <option value="คำขอพร">คำขอพร</option>
+              <option value="ตามศรัทธาคำอธิษฐาน">ตามศรัทธาคำอธิษฐาน</option>
             </select>
           </div>
   
@@ -88,7 +116,6 @@ export default function ManageCampaign() {
             <select id="swal-respond" class="w-2/3 p-2 border border-gray-300 rounded-lg">
               <option value="แอดมินจะส่งภาพกองบุญให้ท่านได้อนุโมทนาอีกครั้ง">แอดมินจะส่งภาพกองบุญให้ท่านได้อนุโมทนาอีกครั้ง</option>
               <option value="ข้อมูลของท่านเข้าระบบเรียบร้อยแล้ว">ข้อมูลของท่านเข้าระบบเรียบร้อยแล้ว</option>
-              <option value="ไม่ส่งข้อความ">ไม่ส่งข้อความ</option>
             </select>
           </div>
   
@@ -105,9 +132,20 @@ export default function ManageCampaign() {
           </div>
   
           <!-- ราคา & เปิดรับ -->
+          <div class="">
+           <div>
+            ( ตามกำลังศรัทธา คลิก
+                        <input
+    type="checkbox"
+    name="donationall"
+    onChange="handleDonationAllChange(event)"
+        />
+                        </label>)
+            </div>
+          </div>
           <div class="grid grid-cols-2 gap-4 mb-4">
             <div>
-              <label class="block text-lg font-semibold mb-1">ราคา:</label>
+              <label class="block text-lg font-semibold mb-1">ราคา</label>
               <input id="swal-price" type="number" min="1" class="w-full p-2 border border-gray-300 rounded-lg" value="1" required />
             </div>
             <div>
@@ -305,21 +343,21 @@ export default function ManageCampaign() {
       cancelButtonText: "ยกเลิก",
       focusConfirm: false,
       preConfirm: () => {
-        return {  
+        return {
           id: campaign.id,
           status: document.getElementById("swal-status").value.trim(),
           details: document.getElementById("swal-details").value.trim(),
           respond: document.getElementById("swal-respond").value.trim(),
           name: document.getElementById("swal-name").value.trim(),
           description: document.getElementById("swal-description").value.trim(),
-          price: Number(document.getElementById("swal-price").value.trim()) || 0,  
-          stock: Number(document.getElementById("swal-stock").value.trim()) || 0,  
+          price: Number(document.getElementById("swal-price").value.trim()) || 0,
+          stock: Number(document.getElementById("swal-stock").value.trim()) || 0,
         };
       },
     });
-  
+
     if (!formValues) return;
-  
+
     try {
       const res = await fetch("/api/campaigns", {
         method: "PUT",
@@ -328,14 +366,14 @@ export default function ManageCampaign() {
         },
         body: JSON.stringify(formValues),
       });
-  
+
       if (!res.ok) throw new Error("แก้ไขกองบุญไม่สำเร็จ");
       Swal.fire("สำเร็จ!", "แก้ไขข้อมูลกองบุญแล้ว", "success");
     } catch (error) {
       Swal.fire("เกิดข้อผิดพลาด!", error.message, "error");
     }
   };
-  
+
 
   if (loading) {
     return (
@@ -394,7 +432,7 @@ export default function ManageCampaign() {
             onClick={handleAddUser}
             className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600"
           >
-            + เพิ่มสมาชิก
+            + เพิ่มกองบุญใหม่
           </button>
         </div>
 
@@ -435,19 +473,37 @@ export default function ManageCampaign() {
                       </a>
                     </td>
                     <td className="p-4">{campaign.name}</td>
-                    <td className="p-4 text-center">{campaign.price}</td>
-                    <td className="p-4 text-center">{campaign.stock}</td>
-                    <td className="p-4 text-center">{campaign.total_value}</td>
+                    <td className="p-4 text-center">
+                      {campaign.price === 1 ? "ตามกำลังศรัทธา" : campaign.price}
+                    </td>
+                    <td className="p-4 text-center">
+                      {campaign.price === 1 ? "ตามกำลังศรัทธา" : campaign.stock}
+                    </td>
+                    <td className="p-4 text-center">
+                      {campaign.price === 1 ? campaign.total_value + " (บาท)" : campaign.total_value}
+                    </td>
                     <td className="p-4 text-center">
                       <div className="flex justify-center gap-2">
-                        <button
-                          onClick={() =>
-                            (window.location.href = `/admin/manage-campaign/campaign-detail/${campaign.id}`)
-                          }
-                          className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
-                        >
-                          รายการร่วมบุญ
-                        </button>
+                        {campaign.price === 1 && (
+                          <button
+                            onClick={() =>
+                              (window.location.href = `/admin/manage-campaign/campaign-detail-all/${campaign.id}`)
+                            }
+                            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+                          >
+                            รายการร่วมบุญ
+                          </button>
+                        )}
+                        {campaign.price > 1 && (
+                          <button
+                            onClick={() =>
+                              (window.location.href = `/admin/manage-campaign/campaign-detail/${campaign.id}`)
+                            }
+                            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+                          >
+                            รายการร่วมบุญ
+                          </button>
+                        )}
                         <button
                           onClick={() => handleEditCampaign(campaign)}
                           className="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition"

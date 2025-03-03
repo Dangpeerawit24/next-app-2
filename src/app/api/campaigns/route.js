@@ -67,7 +67,7 @@ export async function POST(req) {
   try {
     const formData = await req.formData();
 
-    const UPLOAD_DIR = path.join(process.cwd(), "public/img/campaigns");
+    const UPLOAD_DIR = path.join(process.cwd(), "uploads/img/campaigns");
 
     if (!fs.existsSync(UPLOAD_DIR)) {
       fs.mkdirSync(UPLOAD_DIR, { recursive: true });
@@ -84,6 +84,11 @@ export async function POST(req) {
     const respond = formData.get("respond");
     const file = formData.get("campaign_img");
     const randomInt = Math.floor(Math.random() * 9000) + 1000
+    const detailsname = "true";
+    const detailsbirthdate = "true";
+    const detailstext = "true";
+    const detailswish = "true";
+
 
     const fileExt = path.extname(file.name);
     const newFileName = `${Date.now()}${randomInt}${fileExt}`;
@@ -92,21 +97,98 @@ export async function POST(req) {
 
     const fileBuffer = Buffer.from(await file.arrayBuffer());
     await fs.promises.writeFile(newFilePath, fileBuffer);
-    const campaign_img = `img/campaigns/${newFileName}`;
+    const campaign_img = `/api/uploads/img/campaigns/${newFileName}`;
 
-    const campaign = await prisma.campaign.create({
-      data: {
-        name,
-        description,
-        price,
-        topicId,
-        stock,
-        details,
-        status,
-        respond,
-        campaign_img,
-      },
-    });
+    if (details === "ชื่อสกุล") {
+      const campaign = await prisma.campaign.create({
+        data: {
+          name,
+          description,
+          price,
+          topicId,
+          stock,
+          detailsname,
+          status,
+          respond,
+          campaign_img,
+        },
+      });
+    } else if (details === "ชื่อวันเดือนปีเกิด") { 
+      const campaign = await prisma.campaign.create({
+        data: {
+          name,
+          description,
+          price,
+          topicId,
+          stock,
+          detailsname,
+          detailsbirthdate,
+          status,
+          respond,
+          campaign_img,
+        },
+      });
+    } else if (details === "กล่องข้อความใหญ่") { 
+      const campaign = await prisma.campaign.create({
+        data: {
+          name,
+          description,
+          price,
+          topicId,
+          stock,
+          detailstext,
+          status,
+          respond,
+          campaign_img,
+        },
+      });
+    } else if (details === "คำอธิษฐาน") { 
+      const campaign = await prisma.campaign.create({
+        data: {
+          name,
+          description,
+          price,
+          topicId,
+          stock,
+          detailsname,
+          detailswish,
+          status,
+          respond,
+          campaign_img,
+        },
+      });
+    } else if (details === "ตามศรัทธา") { 
+      const campaign = await prisma.campaign.create({
+        data: {
+          name,
+          description,
+          price,
+          topicId,
+          stock,
+          detailsname,
+          status,
+          respond,
+          campaign_img,
+        },
+      });
+    } else if (details === "ตามศรัทธาคำอธิษฐาน") { 
+      const campaign = await prisma.campaign.create({
+        data: {
+          name,
+          description,
+          price,
+          topicId,
+          stock,
+          detailsname,
+          detailswish,
+          status,
+          respond,
+          campaign_img,
+        },
+      });
+    }
+
+    
 
     if (status === "เปิดกองบุญ") {
       const lineToken = process.env.LINE_CHANNEL_ACCESS_TOKEN;
@@ -188,11 +270,11 @@ export async function POST(req) {
 
     userEvent.emit("update");
 
-    return NextResponse.json(campaign);
+    return NextResponse.json({ message: "เพิ่มกองบุญเรียบร้อย" });
   } catch (error) {
     console.error("เกิดข้อผิดพลาด:", error);
     return NextResponse.json(
-      { error: "ไม่สามารถเพิ่มสมาชิกได้" },
+      { error: "ไม่สามารถเพิ่มกองบุญได้" },
       { status: 500 }
     );
   }

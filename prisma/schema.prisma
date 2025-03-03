@@ -22,11 +22,11 @@ model Campaign_transactions {
   id        Int  @id @default(autoincrement())
   campaignsname      String
   lineId      String?
+  transactionID      String?
   lineName      String
   form      String
-  value      String
+  value      String?
   details      String?
-  details2      String?
   detailsname      String?
   detailsbirthdate      String?
   detailsbirthmonth      String?
@@ -35,8 +35,8 @@ model Campaign_transactions {
   detailsbirthconstellation      String?
   detailsbirthage      String?
   detailstext      String?
-  wish      String?
-  evidence      String?
+  detailswish      String?
+  slip      String?
   url_img      String?
   qr_url      String?
   status      String?
@@ -64,7 +64,10 @@ model Campaign {
   price      Int?
   respond      String?
   stock      Int?
-  details      String?
+  detailsname      String? @default("false")
+  detailsbirthdate      String? @default("false")
+  detailstext      String? @default("false")
+  detailswish      String? @default("false")
   campaign_img      String?
   campaign_imgpush      String?
   status      String?

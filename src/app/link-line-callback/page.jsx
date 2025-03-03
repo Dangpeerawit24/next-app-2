@@ -28,7 +28,7 @@ export default function LinkLineCallback() {
           body: new URLSearchParams({
             grant_type: "authorization_code",
             code,
-            redirect_uri: "http://localhost:3000/link-line-callback",
+            redirect_uri: process.env.NEXT_PUBLIC_LINE_LINK_URI,
             client_id: process.env.NEXT_PUBLIC_LINE_LINK_CLIENT_ID,
             client_secret: process.env.NEXT_PUBLIC_LINE_LINK_CLIENT_SECRET,
           }),

@@ -7,6 +7,22 @@ const nextConfig = {
     domains: [
       'localhost',
     ],
+    remotePatterns: [
+      {
+        protocol: "http",
+        hostname: "localhost",
+        port: "",
+        pathname: "/**",
+      },
+    ],
+  },
+  experimental: {
+    serverActions: {
+      bodySizeLimit: '3mb',
+    },
+  },
+  typescript: {
+    ignoreBuildErrors: true,
   },
 };
 

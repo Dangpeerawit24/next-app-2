@@ -3,7 +3,8 @@ import { NextResponse } from "next/server";
 import { EventEmitter } from "events";
 import fs from "fs";
 import path from "path";
-
+import QRCode from "qrcode";
+import crypto from "crypto";
 
 const prisma = new PrismaClient();
 if (!global.userEvent) {
@@ -62,62 +63,104 @@ export async function GET(req) {
   });
 }
 
-// ✅ เพิ่มสมาชิกใหม่
 export async function POST(req) {
   try {
     const formData = await req.formData();
 
-    const UPLOAD_DIR = path.join(process.cwd(), "public/img/campaigns");
+    const UPLOAD_DIR = path.join(process.cwd(), "public/img/slip");
 
+    // ตรวจสอบว่าไดเรกทอรีมีอยู่หรือไม่ ถ้าไม่มีให้สร้างใหม่
     if (!fs.existsSync(UPLOAD_DIR)) {
       fs.mkdirSync(UPLOAD_DIR, { recursive: true });
     }
 
-    const name = formData.get("name");
-    const description = formData.get("description");
-    const price = parseInt(formData.get("price"), 10);
-    const stock = parseInt(formData.get("stock"), 10);
-    const status = formData.get("status");
-    const topicId = parseInt(formData.get("topicId"), 10);
-    const Broadcast = formData.get("Broadcast");
+    // ดึงข้อมูลจากฟอร์ม
     const details = formData.get("details");
+    const detailswish = formData.get("detailswish");
+    const value = formData.get("value");
+    const lineName = formData.get("lineName");
+    const form = formData.get("form");
     const respond = formData.get("respond");
-    const file = formData.get("campaign_img");
+    const campaignsid = formData.get("campaignsid");
+    const campaignsname = formData.get("campaignsname");
+    const transactionID = crypto.randomBytes(16).toString("hex");
 
-    const fileExt = path.extname(file.name);
-    const newFileName = `${Date.now()}${fileExt}`;
-    const newFilePath = path.join(UPLOAD_DIR, newFileName);
-    const URL = process.env.NEXT_PUBLIC_BASE_URL;
+    let status;
+    if (respond === "แอดมินจะส่งภาพกองบุญให้ท่านได้อนุโมทนาอีกครั้ง") {
+      status = "รอดำเนินการ";
+    } else {
+      status = "ส่งภาพกองบุญแล้ว";
+    }
 
-    const fileBuffer = Buffer.from(await file.arrayBuffer());
-    await fs.promises.writeFile(newFilePath, fileBuffer);
-    const campaign_img = `/img/campaigns/${newFileName}`;
+    // ค้นหาข้อมูล lineUser จากฐานข้อมูล โดยใช้ display_name เท่ากับ lineName
+    let lineNameinsert = lineName;
+    let lineLineIdinsert = null;
+    let lineUserData = [];
+    if (lineName) {
+      lineUserData = await prisma.line_users.findMany({
+        where: { display_name: lineName },
+        orderBy: { id: "desc" },
+        take: 1,
+      });
+    }
 
-    const campaign = await prisma.campaign.create({
+    // ถ้ามีข้อมูลจากฐานข้อมูล ให้นำข้อมูลจาก element แรกใน array มาใช้
+    if (lineUserData && lineUserData.length > 0) {
+      lineNameinsert = lineUserData[0].display_name;
+      lineLineIdinsert = lineUserData[0].user_id;
+    }
+
+    // สร้าง QR Code หากมีข้อมูล lineUser
+    let qrUrl = null;
+    if (lineLineIdinsert) {
+      const qrData = `${process.env.NEXT_PUBLIC_BASE_URL}/line/pushimages/${transactionID}`;
+      const qrFolder = path.join(process.cwd(), "uploads/img/qrcodes");
+      if (!fs.existsSync(qrFolder)) {
+        fs.mkdirSync(qrFolder, { recursive: true });
+      }
+
+      // สร้างชื่อไฟล์ QR Code
+      const qrFileName = `qrcode_${Date.now()}_${Math.floor(Math.random() * 10000)}.png`;
+      const qrFilePath = path.join(qrFolder, qrFileName);
+
+      // สร้าง QR Code และบันทึกเป็นไฟล์
+      await QRCode.toFile(qrFilePath, qrData, {
+        width: 300,
+      });
+      qrUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/api/uploads/img/qrcodes/${qrFileName}`;
+    }
+
+    // สร้างข้อมูลใหม่ในฐานข้อมูล
+    const newTransaction = await prisma.campaign_transactions.create({
       data: {
-        name,
-        description,
-        price,
-        topicId,
-        stock,
-        details,
-        status,
-        respond,
-        campaign_img,
+        details: details,
+        detailswish: detailswish,
+        lineId: lineLineIdinsert,
+        lineName: lineNameinsert,
+        transactionID: transactionID,
+        campaignsname: campaignsname,
+        campaignsid: Number(campaignsid),
+        form: form,
+        value: value,
+        status: status,
+        qr_url: qrUrl,
       },
     });
 
     userEvent.emit("update");
 
-    return NextResponse.json(campaign);
+    return new Response(JSON.stringify({ success: true, data: newTransaction }), {
+      status: 201,
+    });
   } catch (error) {
-    console.error("เกิดข้อผิดพลาด:", error);
-    return NextResponse.json(
-      { error: "ไม่สามารถเพิ่มสมาชิกได้" },
+    console.error("Error submitting form:", error);
+    return new Response(
+      JSON.stringify({ success: false, message: "Internal Server Error" }),
       { status: 500 }
     );
   }
 }
+
 
 // ✅ แก้ไขข้อมูลสมาชิก
 export async function PUT(req) {

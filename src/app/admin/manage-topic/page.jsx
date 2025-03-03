@@ -216,7 +216,7 @@ export default function ManageTopic() {
           </button>
         </div>
 
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto table-container table-fixed">
           <table className="w-full border-collapse bg-white rounded-lg shadow-md">
             <thead className="bg-gray-200 ">
               <tr>
@@ -225,7 +225,7 @@ export default function ManageTopic() {
                 <th className="p-4 w-[15%] text-center">จำนวนกองบุญที่เปิด</th>
                 <th className="p-4 w-[15%] text-center">ยอดรวมรายได้</th>
                 <th className="p-4 w-[15%] text-center">สถานะ</th>
-                <th className="p-4 w-[20%] text-center">จัดการ</th>
+                <th className="p-4 w-[25%] text-center">จัดการ</th>
               </tr>
             </thead>
             <tbody>
@@ -241,7 +241,7 @@ export default function ManageTopic() {
                       onClick={() => (window.location.href = `/admin/topic-detail/${topic.id}`)}
                       className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 mr-2"
                     >
-                      รายละเอียด
+                      รายการกองบุญ
                     </button>
                     <button
                       onClick={() => handleEditUser(topic)}

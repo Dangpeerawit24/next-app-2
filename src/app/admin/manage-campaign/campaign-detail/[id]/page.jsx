@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Fragment } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Swal from "sweetalert2";
@@ -11,6 +11,8 @@ import { X } from "lucide-react";
 import { useParams } from "next/navigation"
 import ScrollToTop from "../../../../components/ScrollToTop";
 import useSSE from "../../../../hooks/useSSE";
+import Image from "next/image";
+import * as XLSX from "xlsx";
 
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
 
@@ -18,9 +20,11 @@ export default function CampaignDetail() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [campaigns, setCampaigns] = useState([]);
+  const [namecampaign, setnamecampaign] = useState([]);
   const [loading, setLoading] = useState(true);
   const { id } = useParams();
-  
+  const [timestamp, setTimestamp] = useState(Date.now());
+
   // ✅ ตรวจสอบสิทธิ์ (อนุญาตเฉพาะ Admin)
   useEffect(() => {
     if (status === "loading") return;
@@ -39,90 +43,102 @@ export default function CampaignDetail() {
     setCampaigns(data);
     setLoading(false);
   });
-    
+
+  const fetachName = async (id) => {
+    const res = await fetch(`/api/campaign-transactions/name?id=${id}`);
+    const data = await res.json();
+    setnamecampaign(data);
+  };
+
+  useEffect(() => {
+    fetachName(id);
+  }, [id]);
+
+  if (typeof window !== "undefined") {
+    window.addCommas = function () {
+      const textarea = document.getElementById("swal-details");
+      const value = document.getElementById("swal-value");
+      if (!textarea || !value) return;
+
+      const lines = textarea.value.split("\n");
+
+      const updatedLines = lines.map((line, index) => {
+        return line.trim() !== "" && index < lines.length - 1
+          ? `${line}/n/`
+          : line;
+      });
+
+      textarea.value = updatedLines.join("\n");
+
+      value.value = lines.length;
+    };
+  }
+
+  if (typeof window !== "undefined") {
+    window.addCommasWish = function () {
+      const textarea = document.getElementById("swal-detailswish");
+      const value = document.getElementById("swal-value");
+      if (!textarea || !value) return;
+
+      const lines = textarea.value.split("\n");
+
+      const updatedLines = lines.map((line, index) => {
+        return line.trim() !== "" && index < lines.length - 1
+          ? `${line}/n/`
+          : line;
+      });
+
+      textarea.value = updatedLines.join("\n");
+
+      value.value = lines.length;
+    };
+  }
+
+
   // ✅ เพิ่มสมาชิกใหม่
   const handleAddUser = async () => {
     const { value: formValues } = await Swal.fire({
-      title: "เพิ่มกองบุญใหม่",
+      title: "เพิ่มรายการร่วมบุญ",
       html: `
         <div class="w-full max-w-lg mx-auto p-4">
-          <!-- สถานะกองบุญ -->
-          <div class="flex items-center gap-2 mb-4">
-            <p class="w-1/3 text-lg text-start font-semibold">สถานะกองบุญ:</p>
-            <select id="swal-status" class="w-2/3 p-2 border border-gray-300 rounded-lg">
-              <option value="เปิดกองบุญ">เปิดกองบุญ</option>
-              <option value="รอเปิด">รอเปิด</option>
-              <option value="ปิดกองบุญแล้ว">ปิดกองบุญแล้ว</option>
-            </select>
-          </div>
+
+          <div class="mb-4">
+            <label class="block text-lg font-semibold mb-1">รายนาม:</label>
+            <textarea id="swal-details" rows="5" class="w-full p-2 border border-gray-300 rounded-lg" required></textarea>
+          <button class="p-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+                                onclick="addCommas()">แยกรายการ</button>
+            </div>
+          
   
-          <!-- ส่งให้ -->
-          <div class="flex items-center gap-2 mb-4">
-            <p class="w-1/3 text-lg text-start font-semibold">ส่งให้:</p>
-            <select id="swal-Broadcast" class="w-2/3 p-2 border border-gray-300 rounded-lg">
-              <option value="Broadcast">Broadcast ทั้งหมด</option>
-              <option value="3months">ลูกบุญย้อนหลัง 3 เดือน</option>
-              <option value="year">ลูกบุญย้อนหลัง 1 ปี</option>
-              <option value="NOBroadcast">ไม่ส่งข้อความ</option>
-            </select>
+          <div class="mb-4">
+            <label class="block text-lg font-semibold mb-1">คำขอพร:</label>
+            <textarea id="swal-detailswish" rows="5" class="w-full p-2 border border-gray-300 rounded-lg"></textarea>
+            <button class="p-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+                                onclick="addCommasWish()">แยกรายการ</button>
           </div>
 
-          <div class="flex items-center gap-2 mb-4">
-            <p class="w-1/3 text-lg text-start font-semibold">เลือกงาน:</p>
-              <div class="w-2/3" id="topic-container"></div>
+          <div class="grid grid-cols-1 gap-4 mb-4">
+            <div>
+              <label class="block text-lg font-semibold mb-1">จำนวน:</label>
+              <input id="swal-value" type="number" min="1" class="w-full p-2 border border-gray-300 rounded-lg" value="1" required />
             </div>
-  
-          <!-- ประเภทข้อมูลที่ส่ง -->
-          <div class="flex items-center gap-2 mb-4">
-            <p class="w-1/3 text-lg text-start font-semibold">ข้อมูลที่ส่ง:</p>
-            <select id="swal-details" class="w-2/3 p-2 border border-gray-300 rounded-lg">
-              <option value="ชื่อสกุล">ชื่อสกุล</option>
-              <option value="กล่องข้อความใหญ่">กล่องข้อความใหญ่</option>
-              <option value="ชื่อวันเดือนปีเกิด">ชื่อวันเดือนปีเกิด</option>
-              <option value="ตามศรัทธา">ตามศรัทธา</option>
-              <option value="คำขอพร">คำขอพร</option>
-            </select>
           </div>
-  
-          <!-- ตอบกลับ -->
-          <div class="flex items-center gap-2 mb-4">
-            <p class="w-1/3 text-lg text-start font-semibold">ตอบกลับ:</p>
-            <select id="swal-respond" class="w-2/3 p-2 border border-gray-300 rounded-lg">
-              <option value="แอดมินจะส่งภาพกองบุญให้ท่านได้อนุโมทนาอีกครั้ง">แอดมินจะส่งภาพกองบุญให้ท่านได้อนุโมทนาอีกครั้ง</option>
-              <option value="ข้อมูลของท่านเข้าระบบเรียบร้อยแล้ว">ข้อมูลของท่านเข้าระบบเรียบร้อยแล้ว</option>
-              <option value="ไม่ส่งข้อความ">ไม่ส่งข้อความ</option>
-            </select>
-          </div>
-  
-          <!-- ชื่อกองบุญ -->
-          <div class="mb-4">
-            <label class="block text-lg font-semibold mb-1">ชื่อกองบุญ:</label>
-            <textarea id="swal-name" rows="3" class="w-full p-2 border border-gray-300 rounded-lg" required></textarea>
-          </div>
-  
-          <!-- รายละเอียด -->
-          <div class="mb-4">
-            <label class="block text-lg font-semibold mb-1">รายละเอียด:</label>
-            <textarea id="swal-description" rows="5" class="w-full p-2 border border-gray-300 rounded-lg" required></textarea>
-          </div>
-  
-          <!-- ราคา & เปิดรับ -->
+
           <div class="grid grid-cols-2 gap-4 mb-4">
             <div>
-              <label class="block text-lg font-semibold mb-1">ราคา:</label>
-              <input id="swal-price" type="number" min="1" class="w-full p-2 border border-gray-300 rounded-lg" value="1" required />
+              <label class="block text-lg font-semibold mb-1">ชื่อไลน์:</label>
+              <input id="swal-lineName" type="text" class="w-full p-2 border border-gray-300 rounded-lg" required />
             </div>
             <div>
-              <label class="block text-lg font-semibold mb-1">เปิดรับ:</label>
-              <input id="swal-stock" type="number" min="1" class="w-full p-2 border border-gray-300 rounded-lg" value="1" required />
+              <label class="block text-lg font-semibold mb-1">ที่มา:</label>
+              <select id="swal-form" class="w-full p-2 border border-gray-300 rounded-lg">
+                <option value="L">L</option>
+                <option value="IB">IB</option>
+                <option value="P">P</option>
+              </select> 
             </div>
           </div>
   
-          <!-- อัปโหลดรูปภาพ -->
-          <div class="mb-4">
-            <label class="block text-lg font-semibold mb-2">รูปกองบุญ:</label>
-            <input class="w-full p-2 border border-gray-300 rounded-lg" type="file" id="swal-campaign_img" accept="image/*" required />
-          </div>
         </div>
       `,
       didOpen: () => {
@@ -142,46 +158,28 @@ export default function CampaignDetail() {
       cancelButtonText: "ยกเลิก",
       focusConfirm: false,
       preConfirm: () => {
-        const name = document.getElementById("swal-name").value.trim();
-        const description = document
-          .getElementById("swal-description")
-          .value.trim();
-        const status = document.getElementById("swal-status").value;
-        const topicId = document.getElementById("swal-topicId").value;
-        const Broadcast = document.getElementById("swal-Broadcast").value;
         const details = document.getElementById("swal-details").value;
-        const respond = document.getElementById("swal-respond").value;
-        const price = document.getElementById("swal-price").value;
-        const stock = document.getElementById("swal-stock").value;
-        const campaign_img =
-          document.getElementById("swal-campaign_img").files[0];
+        const detailswish = document.getElementById("swal-detailswish").value;
+        const value = document.getElementById("swal-value").value;
+        const lineName = document.getElementById("swal-lineName").value;
+        const form = document.getElementById("swal-form").value;
 
         if (
-          !name ||
-          !description ||
-          !status ||
-          !Broadcast ||
           !details ||
-          !respond ||
-          !campaign_img ||
-          price < 1 ||
-          stock < 1
+          !value ||
+          !lineName ||
+          !form
         ) {
           Swal.showValidationMessage("กรุณากรอกข้อมูลให้ครบทุกช่อง!");
           return false;
         }
 
         return {
-          name,
-          description,
-          price,
-          stock,
-          status,
-          Broadcast,
           details,
-          respond,
-          topicId,
-          campaign_img,
+          detailswish,
+          value,
+          lineName,
+          form,
         };
       },
     });
@@ -191,24 +189,22 @@ export default function CampaignDetail() {
     try {
       // ✅ ใช้ `FormData` แทน `JSON.stringify()` เพื่อรองรับการอัปโหลดไฟล์
       const formData = new FormData();
-      formData.append("name", formValues.name);
-      formData.append("description", formValues.description);
-      formData.append("price", formValues.price);
-      formData.append("topicId", formValues.topicId);
-      formData.append("stock", formValues.stock);
-      formData.append("status", formValues.status);
-      formData.append("Broadcast", formValues.Broadcast);
       formData.append("details", formValues.details);
-      formData.append("respond", formValues.respond);
-      formData.append("campaign_img", formValues.campaign_img);
+      formData.append("detailswish", formValues.detailswish);
+      formData.append("value", formValues.value);
+      formData.append("lineName", formValues.lineName);
+      formData.append("form", formValues.form);
+      formData.append("campaignsid", namecampaign.id);
+      formData.append("campaignsname", namecampaign.name);
+      formData.append("respond", namecampaign.respond);
 
-      const res = await fetch("/api/campaigns", {
+      const res = await fetch("/api/campaign-transactions", {
         method: "POST",
         body: formData, // ✅ ใช้ FormData เพื่อรองรับการอัปโหลดไฟล์
       });
 
-      if (!res.ok) throw new Error("เพิ่มกองบุญไม่สำเร็จ");
-      Swal.fire("สำเร็จ!", "เพิ่มกองบุญใหม่แล้ว", "success");
+      if (!res.ok) throw new Error("เพิ่มรายการร่วมบุญไม่สำเร็จ");
+      Swal.fire("สำเร็จ!", "เพิ่มรายการร่วมบุญใหม่แล้ว", "success");
     } catch (error) {
       Swal.fire("เกิดข้อผิดพลาด!", error.message, "error");
     }
@@ -242,54 +238,56 @@ export default function CampaignDetail() {
     }
   };
 
-  // ✅ แก้ไขสมาชิก
-  const handleEdit = async (user) => {
-    const { value: formValues } = await Swal.fire({
-      title: "แก้ไขข้อมูลสมาชิก",
-      html: `
-        <input id="swal-name" class="swal2-input" placeholder="ชื่อ" value="${
-          user.name
-        }">
-        <input id="swal-email" class="swal2-input" placeholder="อีเมล" value="${
-          user.email
-        }">
-        <select id="swal-role" class="swal2-input">
-          <option value="admin" ${
-            user.role === "admin" ? "selected" : ""
-          }>Admin</option>
-          <option value="moderator" ${
-            user.role === "moderator" ? "selected" : ""
-          }>Moderator</option>
-          <option value="user" ${
-            user.role === "user" ? "selected" : ""
-          }>User</option>
-        </select>
-      `,
-      focusConfirm: false,
-      preConfirm: () => {
-        return {
-          id: user.id,
-          name: document.getElementById("swal-name").value.trim(),
-          email: document.getElementById("swal-email").value.trim(),
-          role: document.getElementById("swal-role").value.trim(),
-        };
-      },
-    });
+  const copyTable = () => {
+    const table = document.getElementById("myTable");
+    if (!table) return;
 
-    if (!formValues) return;
+    const columnsToCopy = [0, 1, 2, 3, 4, 5, 6, 7];
 
-    try {
-      const res = await fetch("/api/users", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formValues),
+    let textToCopy = "";
+    const rows = table.querySelectorAll("tr");
+    rows.forEach((row) => {
+      const cells = row.querySelectorAll("th, td");
+      const rowData = [];
+
+      columnsToCopy.forEach((colIndex) => {
+        const cell = cells[colIndex];
+        const cellText = cell
+          ? cell.innerText.replace(/\r?\n|\r/g, " ")
+          : "";
+        rowData.push(cellText);
       });
 
-      if (!res.ok) throw new Error("แก้ไขข้อมูลไม่สำเร็จ");
-      Swal.fire("บันทึกสำเร็จ!", "ข้อมูลสมาชิกถูกอัปเดตแล้ว", "success");
-    } catch (error) {
-      Swal.fire("เกิดข้อผิดพลาด!", error.message, "error");
-    }
+      textToCopy += rowData.join("\t") + "\n";
+    });
+
+    navigator.clipboard
+      .writeText(textToCopy)
+      .then(() => {
+        Swal.fire({
+          title: "คัดลอกไปยัง Clipboard แล้ว!",
+          icon: "success",
+          confirmButtonText: "ตกลง"
+        });
+      })
+      .catch((err) => {
+        Swal.fire({
+          title: "คัดลอกไม่สำเร็จ",
+          text: err.message,
+          icon: "error",
+          confirmButtonText: "ตกลง"
+        });
+      });
+  };
+
+
+  const exportToExcel = () => {
+    const table = document.getElementById("myTable");
+    if (!table) return;
+
+    const wb = XLSX.utils.table_to_book(table, { sheet: "Sheet1" });
+
+    XLSX.writeFile(wb, "myTableData.xlsx");
   };
 
   if (loading) {
@@ -340,32 +338,45 @@ export default function CampaignDetail() {
     <div className="min-h-screen pt-16 bg-gray-100">
       <Navbar />
       <main className="p-6">
-        <h1 className="text-2xl font-bold text-gray-900  text-center mb-6">
+        <h1 className="text-2xl font-bold text-gray-900  text-center">
           จัดการข้อมูลกองบุญ
         </h1>
+        <h2 className="text-xl font-bold text-gray-900  text-center mb-6">#{namecampaign.name}</h2>
 
-        <div className="flex justify-end mb-4">
-          <button
-            onClick={handleAddUser}
-            className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600"
-          >
-            + เพิ่มสมาชิก
-          </button>
+        <div className="flex justify-between items-center mb-4">
+          <div className="flex gap-2">
+            <button onClick={copyTable} className="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600">คัดลอกข้อมูลในตาราง</button>
+            <button onClick={exportToExcel} className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">บันทึกเป็น Excel</button>
+            <button 
+              onClick={() =>
+                (window.location.href = `/admin/manage-campaign/campaign-detail-succeed/${namecampaign.id}`)
+              } 
+            className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600">รายการที่กำเนิดการแล้ว</button>
+          </div>
+          <div>
+            <button
+              onClick={handleAddUser}
+              className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600"
+            >
+              + เพิ่มรายการร่วมบุญ
+            </button>
+          </div>
         </div>
 
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto table-container table-fixed">
           <div className="overflow-auto rounded-lg shadow-lg">
-            <table className="min-w-full border-collapse bg-white rounded-lg">
+            <table id="myTable" className="w-full table-fixed border-collapse bg-white rounded-lg">
               <thead className="bg-gray-200  text-gray-700 ">
                 <tr>
-                  <th className="p-4 w-[5%] text-center">#</th>
-                  <th className="p-4 w-[10%] text-center">สลิป</th>
-                  <th className="p-4 text-left">ข้อมูลผู้ร่วมบุญ</th>
-                  <th className="p-4 w-[10%] text-center">คำขอพร</th>
-                  <th className="p-4 w-[10%] text-center">จำนวน</th>
+                  <th className="p-4 w-[2%] text-center">#</th>
+                  <th className="p-4 w-[5%] text-center">สลิป</th>
+                  <th className="p-4 text-start">ข้อมูลผู้ร่วมบุญ</th>
+                  <th className="p-4 text-start">คำขอพร</th>
+                  <th className="p-4 w-[5%] text-center">จำนวน</th>
                   <th className="p-4 w-[10%] text-center">ชื่อไลน์</th>
                   <th className="p-4 w-[10%] text-center">QR Url</th>
-                  <th className="p-4 w-[25%] text-center">จัดการ</th>
+                  <th className="p-4 w-[5%] text-center">ที่มา</th>
+                  <th className="p-4 w-[15%] text-center">จัดการ</th>
                 </tr>
               </thead>
               <tbody>
@@ -380,36 +391,52 @@ export default function CampaignDetail() {
                         className="flex justify-center"
                         href="#"
                         onClick={() =>
-                          imgswl(`${baseUrl}/${campaign.evidence}`)
+                          imgswl(`${baseUrl}/${campaign.slip}`)
                         }
                       >
-                        <img
+                        <Image
                           className="w-12 h-12 object-cover rounded-md border border-gray-300 shadow-sm"
-                          src={`${baseUrl}/${campaign.evidence}`}
+                          src={`${baseUrl}/${campaign.slip}`}
                           alt="campaign"
+                          width={48}
+                          height={48}
                         />
                       </a>
                     </td>
-                    <td className="p-4">{campaign.details}</td>
-                    <td className="p-4 text-center">{campaign.ss}</td>
-                    <td className="p-4 text-center">{campaign.value}</td>
-                    <td className="p-4 text-center">{campaign.lineName}</td>
-                    <td className="p-4 text-center">{campaign.qr_url}</td>
+                    <td className="p-4 text-nowrap truncate-text">
+                      {campaign.detailsname !== null && campaign.detailsbirthdate == null ? campaign.detailsname : ""}
+                      {campaign.detailsname !== null && campaign.detailswish !== null ? campaign.detailsname : ""}
+                      {campaign.detailsbirthdate !== null ? (
+                        <>
+                          {campaign.detailsname}
+                          <br />
+                          {campaign.detailsbirthdate}{" "}
+                          {campaign.detailsbirthmonth}{" "}
+                          {campaign.detailsbirthyear}{" เวลา "}
+                          {campaign.detailsbirthtime}{" ปี"}
+                          {campaign.detailsbirthconstellation}{" อายุ "}
+                          {campaign.detailsbirthage}{" ปี"}
+                        </>
+                      ) : ""}
+                      {campaign.detailstext !== null ? campaign.detailstext : ""}
+                      {campaign.details !== null ? campaign.details : ""}
+                    </td>
+                    <td className="p-4 text-nowrap tuncate-text">
+                      {campaign.detailswish !== null ? campaign.detailswish : ""}
+                    </td>
+                    <td className="p-4 text-center text-nowrap truncate-text">{campaign.value}</td>
+                    <td className="p-4 text-center text-nowrap truncate-text">{campaign.lineName}</td>
+                    <td className="p-4 text-center text-nowrap truncate-text">{campaign.qr_url}</td>
+                    <td className="p-4 text-center text-nowrap truncate-text">{campaign.form}</td>
                     <td className="p-4 text-center">
                       <div className="flex justify-center gap-2">
                         <button
                           onClick={() =>
-                            (window.location.href = `/admin/campaign-detail/${campaign.id}`)
+                            (window.location.href = `/line/pushimages/${campaign.transactionID}`)
                           }
                           className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
                         >
-                          รายการร่วมบุญ
-                        </button>
-                        <button
-                          onClick={() => handleEdit(campaign)}
-                          className="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition"
-                        >
-                          แก้ไข
+                          ส่งรูป
                         </button>
                         <button
                           onClick={() => handleDelete(campaign.id)}
